@@ -1,29 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-#
-#  untitled.py
-#  
-#  Copyright 2013 collin <collin@collin-virtual-machine>
-#  
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#  
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#  
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#  MA 02110-1301, USA.
-#  
 #  put install and uninstall mod in to class make it so you can install and uninstall mods without passing in argument
+
+import os
 import shutil
 import sys
-import os
+
 def translate_path(path, path_root):
 	# path = '/home/collin/Desktop/mod1/file1'
 	# path_root = mod = '/home/collin/Desktop/mod1'
@@ -44,8 +25,6 @@ def translate_path(path, path_root):
 	# path = './file1'
 	return path
 
-
-
 def count_directory_contents(directory):
 	files = 0
 	directories = 0
@@ -53,16 +32,14 @@ def count_directory_contents(directory):
 		files += len(tmp_files)
 		directories += len(tmp_dirs)
 	return {'files': files, 'directories':directories}
-	
-	
+
 def print_directory_contents(directory):
 	for root, directories, files in os.walk(directory):
 		for f in files:
 			print(os.path.join(root, f))
 		for d in directories:
 			print(os.path.join(root, d))
-	
-	
+
 def copy_file(source, destination):
 	source = open(source, 'rb')
 	destination = open(destination, 'wb')
@@ -71,6 +48,7 @@ def copy_file(source, destination):
 		destination.write(chunk)
 		chunk = source.read(1024)
 	return 0
+
 class ModInstall:
 	def __init__(self, mod, game, backup = None):
 		self.game = os.path.abspath(os.path.normpath(game))
@@ -113,8 +91,6 @@ class ModInstall:
 				mod_file = os.path.join(root, f)
 				backup_file = os.path.normpath(os.path.join(backup, translate_path(mod_file, mod)))
 				game_file = os.path.normpath(os.path.join(game, translate_path(mod_file, mod)))
-				
-				#print('Game File = ' + game_file + ' Mod File = ' + mod_file)
 				if os.path.isfile(game_file):
 					#print('File needs to be backed up ' + game_file)
 					copy_file(game_file, backup_file)
@@ -132,7 +108,6 @@ class ModInstall:
 				mod_file = os.path.join(root, f)
 				game_file = os.path.normpath(os.path.join(game, translate_path(mod_file, mod)))
 				copy_file(mod_file, game_file)
-
 		return 0
 
 	def uninstall_mod(self):
@@ -159,7 +134,7 @@ class ModInstall:
 				game_dir = os.path.normpath(os.path.join(game, translate_path(mod_dir, mod)))
 				if not os.path.isdir(backup_dir):
 					shutil.rmtree(game_dir)
-		
+
 def main():
 	game_mod = ModInstall(sys.argv[1], sys.argv[2], sys.argv[3])
 	if sys.argv[4] == '-i':
