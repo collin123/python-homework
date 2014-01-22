@@ -10,6 +10,8 @@ class Player(object):
 		if not position:
 			position = Position(random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10))
 		self.position = position
+		self.logger = logging.getLogger('Player')
+		self.logger.debug('player started at ' + str(position))
 		self.health = 100.0
 		self.items = {}
 		self.name = name
@@ -38,7 +40,6 @@ class GameEngine(object):
 		self.player = player
 		self.logger = logging.getLogger('GameEngine')
 		self.logger.info('GameEngine created')
-
 	def pre_move(self):
 		pass
 
@@ -50,38 +51,39 @@ class Interface(cmd.Cmd, object):
 		super(Interface, self).__init__()
 		self.player = Player(name)
 		self.game_engine = GameEngine(self.player)
+		self.logger = logging.getLogger('status')
 
 	def do_go(self, args):
 		self.game_engine.pre_move()
 		position = self.player.position
 		if args == 'north':
 			if position.latitude == 10:
-				print('you cannot go north anymore')
+				self.logger.debug('you cannot go north anymore')
 			else:
 				position.latitude += 1
 		elif args == 'east':
 			if position.longitude == 10:
-				print('you cannot go east anymore')
+				self.logger.debug('you cannot go east anymore')
 			else:
 				position.longitude += 1
 		elif args == 'south':
 			if position.latitude == -10:
-				print('you cannot go south anymore')
+				self.logger.debug('you cannot go south anymore')
 			else:
 				position.latitude -= 1
 		elif args == 'west':
 			if position.longitude == -10:
-				print('you cannot go west anymore')
+				self.logger.debug('you cannot go west anymore')
 			else:
 				position.longitude -= 1
 		elif args == 'up':
 			if position.altitude == 10:
-				print('you cannot go up anymore')
+				self.logger.debug('you cannot go up anymore')
 			else:
 				position.altitude += 1
 		elif args == 'down':
 			if position.altitude == -10:
-				print('you cannot go down anymore')
+				self.logger.debug('you cannot go down anymore')
 			else:
 				position.altitude -= 1
 		self.game_engine.post_move()
