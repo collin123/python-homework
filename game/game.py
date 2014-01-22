@@ -1,13 +1,14 @@
 import argparse
 import cmd
 import logging
+import random
 
 __version__ = '0.1'
 
 class Player(object):
 	def __init__(self, name, position = None):
 		if not position:
-			position = Position(0, 0, 0)
+			position = Position(random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10))
 		self.position = position
 		self.health = 100.0
 		self.items = {}
@@ -54,18 +55,41 @@ class Interface(cmd.Cmd, object):
 		self.game_engine.pre_move()
 		position = self.player.position
 		if args == 'north':
-			position.latitude += 1
+			if position.latitude == 10:
+				print('you cannot go north anymore')
+			else:
+				position.latitude += 1
 		elif args == 'east':
-			position.longitude += 1
+			if position.longitude == 10:
+				print('you cannot go east anymore')
+			else:
+				position.longitude += 1
 		elif args == 'south':
-			position.latitude -= 1
+			if position.latitude == -10:
+				print('you cannot go south anymore')
+			else:
+				position.latitude -= 1
 		elif args == 'west':
-			position.longitude -= 1
+			if position.longitude == -10:
+				print('you cannot go west anymore')
+			else:
+				position.longitude -= 1
 		elif args == 'up':
-			position.altitude += 1
+			if position.altitude == 10:
+				print('you cannot go up anymore')
+			else:
+				position.altitude += 1
 		elif args == 'down':
-			position.altitude -= 1
+			if position.altitude == -10:
+				print('you cannot go down anymore')
+			else:
+				position.altitude -= 1
 		self.game_engine.post_move()
+
+class Map(object):
+	def __init__(self, map_size = None):
+		if map_size == None:
+			map_size = [10, 10]
 
 
 def main():
