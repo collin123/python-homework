@@ -3,6 +3,8 @@ import copy
 import cmd
 import logging
 import random
+#create a method for gameengine called get_items_for_position(self, position)
+#iterate thro self.all_items and return items that are in the position
 
 __version__ = '0.1'
 
@@ -42,6 +44,11 @@ class GameEngine(object):
 		self.logger = logging.getLogger('GameEngine')
 		self.logger.info('GameEngine created')
 		self.map = Map()
+		treasure = Item('Treasure Chest')
+		treasure.position = self.map.get_random_position()
+		self.logger.debug('Put treasure chest at ' + str(tresure.position))
+		self.all_items = []
+		self.all_items.append(treasure)
 
 	def pre_move(self):
 		pass
@@ -77,6 +84,9 @@ class Interface(cmd.Cmd, object):
 		if not self.map.is_valid_position(position):
 			self._print('Invalid position')
 			self.player.position = old_position
+			return
+		for item in self.game_engine.get_items_for_position(position):
+			self._print('There is a ' + item.name + ' here.')
 		self.game_engine.post_move()
 
 	def _print(self, message):
@@ -102,6 +112,19 @@ class Map(object):
 		altitude = random.randint(self.map_size[1][2], self.map_size[0][2])
 		position = Position(latitude, longitude, altitude)
 		return position
+
+class Item(object):
+	def __init__(self, name):
+		self.name = name
+		self.worth = 0
+		self.weight = 1
+		self.position = None
+
+class Weapon(Item):
+	def __init__(self, name):
+		super(Weapon, self).__init__(name)
+		self.durabilty = 100
+		self.damage = 1
 
 def main():
 	parser = argparse.ArgumentParser(description = '', conflict_handler = 'resolve')
