@@ -1,4 +1,5 @@
 import argparse
+import copy
 import cmd
 import logging
 import random
@@ -8,7 +9,7 @@ __version__ = '0.1'
 class Player(object):
 	def __init__(self, name, position = None):
 		if not position:
-			position = Position(random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10))
+			position = Position(0, 0, 0)
 		self.position = position
 		self.logger = logging.getLogger('Player')
 		self.logger.debug('player started at ' + str(position))
@@ -40,6 +41,8 @@ class GameEngine(object):
 		self.player = player
 		self.logger = logging.getLogger('GameEngine')
 		self.logger.info('GameEngine created')
+		self.map = Map()
+
 	def pre_move(self):
 		pass
 
@@ -51,48 +54,54 @@ class Interface(cmd.Cmd, object):
 		super(Interface, self).__init__()
 		self.player = Player(name)
 		self.game_engine = GameEngine(self.player)
+		self.map = self.game_engine.map
+		self.player.position = self.map.get_random_position()
 		self.logger = logging.getLogger('status')
 
 	def do_go(self, args):
 		self.game_engine.pre_move()
 		position = self.player.position
+		old_position = copy.copy(position)
 		if args == 'north':
-			if position.latitude == 10:
-				self.logger.debug('you cannot go north anymore')
-			else:
-				position.latitude += 1
+			position.latitude += 1
 		elif args == 'east':
-			if position.longitude == 10:
-				self.logger.debug('you cannot go east anymore')
-			else:
-				position.longitude += 1
+			position.longitude += 1
 		elif args == 'south':
-			if position.latitude == -10:
-				self.logger.debug('you cannot go south anymore')
-			else:
-				position.latitude -= 1
+			position.latitude -= 1
 		elif args == 'west':
-			if position.longitude == -10:
-				self.logger.debug('you cannot go west anymore')
-			else:
-				position.longitude -= 1
+			position.longitude -= 1
 		elif args == 'up':
-			if position.altitude == 10:
-				self.logger.debug('you cannot go up anymore')
-			else:
-				position.altitude += 1
+			position.altitude += 1
 		elif args == 'down':
-			if position.altitude == -10:
-				self.logger.debug('you cannot go down anymore')
-			else:
-				position.altitude -= 1
+			position.altitude -= 1
+		if not self.map.is_valid_position(position):
+			self._print('Invalid position')
+			self.player.position = old_position
 		self.game_engine.post_move()
 
-class Map(object):
-	def __init__(self, map_size = None):
-		if map_size == None:
-			map_size = [10, 10]
+	def _print(self, message):
+		print(message)
 
+class Map(object):
+	def __init__(self):
+			#latitude, longitude, altitude
+			self.map_size = [[15, 15, 15], [-15, -15, -5]]
+
+	def is_valid_position(self, position):
+		if not (position.latitude >= self.map_size[1][0] and position.latitude <= self.map_size[0][0]):
+			return False
+		if not (position.longitude >= self.map_size[1][1] and position.longitude <= self.map_size[0][1]):
+			return False
+		if not (position.altitude >= self.map_size[1][2] and position.altitude <= self.map_size[0][2]):
+			return False
+		return True
+
+	def get_random_position(self):
+		latitude = random.randint(self.map_size[1][0], self.map_size[0][0])
+		longitude = random.randint(self.map_size[1][1], self.map_size[0][1])
+		altitude = random.randint(self.map_size[1][2], self.map_size[0][2])
+		position = Position(latitude, longitude, altitude)
+		return position
 
 def main():
 	parser = argparse.ArgumentParser(description = '', conflict_handler = 'resolve')
