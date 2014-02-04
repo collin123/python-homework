@@ -10,11 +10,13 @@ __version__ = '0.1'
 
 class Player(object):
 	def __init__(self, name, position = None):
+		self.map = Map()
 		if not position:
-			position = Position(0, 0, 0)
-		self.position = position
+			self.position = self.map.get_random_position()
+		else:
+			self.position = position
 		self.logger = logging.getLogger('Player')
-		self.logger.debug('player started at ' + str(position))
+		self.logger.debug('player started at ' + str(self.position))
 		self.health = 100.0
 		self.items = {}
 		self.name = name
@@ -38,6 +40,17 @@ class Position(object):
 	def __str__(self):
 		return '(' + str(self.latitude) + ', ' + str(self.longitude) + ', ' + str(self.altitude) + ')'
 
+	def __cmp__(self, other):
+		if not isinstance(other, Position):
+			return -1
+		if not self.latitude == other.latitude:
+			return -1
+		if not self.longitude == other.longitude:
+			return -1
+		if not self.altitude == other.altitude:
+			return -1
+		return 0
+
 class GameEngine(object):
 	def __init__(self, player):
 		self.player = player
@@ -46,7 +59,7 @@ class GameEngine(object):
 		self.map = Map()
 		treasure = Item('Treasure Chest')
 		treasure.position = self.map.get_random_position()
-		self.logger.debug('Put treasure chest at ' + str(tresure.position))
+		self.logger.debug('Put treasure chest at ' + str(treasure.position))
 		self.all_items = []
 		self.all_items.append(treasure)
 
@@ -56,13 +69,20 @@ class GameEngine(object):
 	def post_move(self):
 		self.logger.debug('player moved to ' + str(self.player.position))
 
+	def get_items_for_position(self, position):
+		items = []
+		for item in self.all_items:
+			if item.position == position:
+				items.append(item)
+		return items
+
 class Interface(cmd.Cmd, object):
 	def __init__(self, name):
 		super(Interface, self).__init__()
 		self.player = Player(name)
 		self.game_engine = GameEngine(self.player)
-		self.map = self.game_engine.map
-		self.player.position = self.map.get_random_position()
+		self.map = Map()
+		self.player.position = self.player.position
 		self.logger = logging.getLogger('status')
 
 	def do_go(self, args):
