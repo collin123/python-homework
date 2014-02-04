@@ -3,8 +3,6 @@ import copy
 import cmd
 import logging
 import random
-#create a method for gameengine called get_items_for_position(self, position)
-#iterate thro self.all_items and return items that are in the position
 
 __version__ = '0.1'
 
@@ -18,7 +16,7 @@ class Player(object):
 		self.logger = logging.getLogger('Player')
 		self.logger.debug('player started at ' + str(self.position))
 		self.health = 100.0
-		self.items = {}
+		self.items = []
 		self.name = name
 		self.money = 0
 
@@ -105,9 +103,39 @@ class Interface(cmd.Cmd, object):
 			self._print('Invalid position')
 			self.player.position = old_position
 			return
+		self.game_engine.post_move()
+		self.show_items_in_position(position)
+
+	def show_items_in_position(self, position):
 		for item in self.game_engine.get_items_for_position(position):
 			self._print('There is a ' + item.name + ' here.')
-		self.game_engine.post_move()
+
+	def do_take(self, args):
+		args = args.lower()
+		args = args.strip()
+		items = self.game_engine.get_items_for_position(self.player.position)
+		if not items:
+			self._print('There are no items to take')
+			return 0
+		if args:
+			item_found = False
+			for item in items:
+				if args == item.name.lower():
+					self.add_to_inventory(item)
+					item_found = True
+					break
+			if not item_found:
+				self._print('There is no ' + args + ' here')
+		elif len(items) == 1:
+			self.add_to_inventory(items[0])
+		else:
+			self.show_items_in_position(self.player.position)
+
+	def add_to_inventory(self, item):
+		self._print('Added ' + item.name + ' to your inventory')
+		item.position = None
+		self.player.items.append(item)
+
 
 	def _print(self, message):
 		print(message)
@@ -115,7 +143,7 @@ class Interface(cmd.Cmd, object):
 class Map(object):
 	def __init__(self):
 			#latitude, longitude, altitude
-			self.map_size = [[15, 15, 15], [-15, -15, -5]]
+			self.map_size = [[5, 5, 5], [-5, -5, -5]]
 
 	def is_valid_position(self, position):
 		if not (position.latitude >= self.map_size[1][0] and position.latitude <= self.map_size[0][0]):
