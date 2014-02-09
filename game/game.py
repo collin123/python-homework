@@ -2,7 +2,11 @@ import argparse
 import copy
 import cmd
 import logging
+import shlex
 import random
+
+#create a monster and put it at a random position and need a function see if a enemy is there
+#add all enemies to game engine
 
 __version__ = '0.1'
 
@@ -19,6 +23,9 @@ class Player(object):
 		self.items = []
 		self.name = name
 		self.money = 0
+		wooden_sword = Weapon('sword')
+		wooden_sword.damage = 5
+		self.items.append(wooden_sword)
 
 	def move_latitude(self, adjust):
 		self.position.latitude = self.position.latitude + adjust
@@ -55,9 +62,14 @@ class GameEngine(object):
 		self.logger = logging.getLogger('GameEngine')
 		self.logger.info('GameEngine created')
 		self.map = Map()
+		elf = EnemyElf()
+		elf.position = self.map.get_random_position()
+		self.logger.debug('Put Elf at ' + str(elf.position))
 		treasure = Item('Treasure Chest')
 		treasure.position = self.map.get_random_position()
 		self.logger.debug('Put treasure chest at ' + str(treasure.position))
+		self.all_enemies = []
+		self.all_enemies.append(elf)
 		self.all_items = []
 		self.all_items.append(treasure)
 
@@ -73,6 +85,38 @@ class GameEngine(object):
 			if item.position == position:
 				items.append(item)
 		return items
+
+	def get_enemies_for_position(self, position):
+		enemies = []
+		for enemy in self.all_enemies:
+			if enemy.position == position:
+				enemies.append(enemy)
+		return enemies
+
+class Enemy(object):
+	def __init__(self, name):
+		self.damage = 2
+		self.health = 25
+		self.name = name
+		self.position = None
+
+class EnemyElf(Enemy):
+	def __init__(self, id = 0):
+		name = 'Elf'
+		if id:
+			name += ' ' + str(id)
+		super(EnemyElf, self).__init__(name)
+		self.damage = 3
+		self.health = 15
+
+class EnemySpider(Enemy):
+	def __init__(self, id = 0):
+		name = 'Spider'
+		if id:
+			name += ' ' + str(id)
+		super(EnemySpider, self).__init__(name)
+		self.damage = 5
+		self.health = 10
 
 class Interface(cmd.Cmd, object):
 	def __init__(self, name):
@@ -105,10 +149,19 @@ class Interface(cmd.Cmd, object):
 			return
 		self.game_engine.post_move()
 		self.show_items_in_position(position)
+		self.show_enemies_in_position(position)
 
 	def show_items_in_position(self, position):
 		for item in self.game_engine.get_items_for_position(position):
 			self._print('There is a ' + item.name + ' here.')
+
+	def show_enemies_in_position(self, position):
+		for enemy in self.game_engine.get_enemies_for_position(position):
+			self._print('There is a ' + enemy.name + ' here.')
+
+	def __str__(self):
+		for item in self.game_engine.all_items:
+			return item.name
 
 	def do_take(self, args):
 		args = args.lower()
