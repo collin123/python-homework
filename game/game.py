@@ -23,6 +23,9 @@ class Player(object):
 		self.items = []
 		self.name = name
 		self.money = 0
+
+		ocarina = Item('Ocarina')
+		self.items.append(ocarina)
 		wooden_sword = Weapon('sword')
 		wooden_sword.damage = 5
 		self.items.append(wooden_sword)
@@ -93,6 +96,19 @@ class GameEngine(object):
 				enemies.append(enemy)
 		return enemies
 
+	def attack(self, enemy):
+		return 0
+		self.enemy_health = enemy.health
+		while self.enemy_health and self.player.health > 0:
+			self.enemy_health -= self.attack_item.damage
+			self._print('You did ' + str(self.attack_item.damage) + ' to the ' + self.enemy.name)
+			if self.enemy_health <= 0:
+				self._print('You killed a ' + self.enemy.name)
+			else:
+				self.player.health -= enemy.damage
+				if self.player.health <= 0:
+					self._print('You were killed by a ' + self.enemy.name)
+
 class Enemy(object):
 	def __init__(self, name):
 		self.damage = 2
@@ -158,6 +174,40 @@ class Interface(cmd.Cmd, object):
 	def show_enemies_in_position(self, position):
 		for enemy in self.game_engine.get_enemies_for_position(position):
 			self._print('There is a ' + enemy.name + ' here.')
+
+	def do_attack(self, args):
+		weapon = None
+		args = args.lower()
+		args = args.strip()
+		args_list = shlex.split(args)
+		weapon_name = args_list[2]
+		target_enemy = args_list[0]
+		for item in self.player.items:
+			if item.name.lower() == weapon_name.lower():
+				weapon = item
+				break
+		if not weapon:
+			self._print('There is no ' + weapon_name)
+			return
+		if not isinstance(weapon, Weapon):
+			self._print('That is not a weapon')
+			return
+		self.logger.debug('Player tried using ' + weapon_name)
+
+		enemies = self.game_engine.get_enemies_for_position(self.player.position)
+		if not enemies:
+			self._print('There are no enemies to attack')
+			return 0
+		enemy_attacked = False
+		for enemy in enemies:
+			if target_enemy == enemy.name.lower():
+				enemy_attacked = True
+				damage_dealt = self.game_engine.attack(enemy)
+				break
+		if not enemy_attacked:
+			self._print('There is no ' + target_enemy + ' here')
+		else:
+			self._print('You dealt ' + str(damage_dealt) + ' to ' + target_enemy)
 
 	def __str__(self):
 		for item in self.game_engine.all_items:
