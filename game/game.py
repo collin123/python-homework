@@ -10,6 +10,11 @@ import random
 
 __version__ = '0.1'
 
+def xfrange(start, stop, step):
+	while start < stop:
+		yield start
+		start += step
+
 class Player(object):
 	def __init__(self, name, position = None):
 		self.map = Map()
@@ -96,18 +101,18 @@ class GameEngine(object):
 				enemies.append(enemy)
 		return enemies
 
-	def attack(self, enemy):
-		return 0
-		self.enemy_health = enemy.health
-		while self.enemy_health and self.player.health > 0:
-			self.enemy_health -= self.attack_item.damage
-			self._print('You did ' + str(self.attack_item.damage) + ' to the ' + self.enemy.name)
-			if self.enemy_health <= 0:
-				self._print('You killed a ' + self.enemy.name)
-			else:
-				self.player.health -= enemy.damage
-				if self.player.health <= 0:
-					self._print('You were killed by a ' + self.enemy.name)
+	def attack(self, enemy, weapon):
+		weapon_damage = self.get_low_damage(weapon)
+		enemy.health -= weapon_damage
+		if enemy.health <= 0:
+			enemy.position = None
+		return weapon_damage
+
+	def get_low_damage(self, weapon):
+		weapon_low_damage = float(weapon.damage) / 2.0
+		possible_damages = list(xfrange(weapon_low_damage, weapon.damage, 0.5))
+		possible_damages.append(weapon.damage)
+		return random.choice(possible_damages)
 
 class Enemy(object):
 	def __init__(self, name):
@@ -202,12 +207,14 @@ class Interface(cmd.Cmd, object):
 		for enemy in enemies:
 			if target_enemy == enemy.name.lower():
 				enemy_attacked = True
-				damage_dealt = self.game_engine.attack(enemy)
+				damage_dealt = self.game_engine.attack(enemy, weapon)
 				break
 		if not enemy_attacked:
 			self._print('There is no ' + target_enemy + ' here')
-		else:
-			self._print('You dealt ' + str(damage_dealt) + ' to ' + target_enemy)
+			return
+		self._print('You dealt ' + str(damage_dealt) + ' to ' + target_enemy)
+		if enemy.health <= 0:
+			self._print('You killed the ' + target_enemy)
 
 	def __str__(self):
 		for item in self.game_engine.all_items:
