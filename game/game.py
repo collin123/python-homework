@@ -5,145 +5,19 @@ import logging
 import shlex
 import random
 
-#define post command in interface need stop and line takes check if there is a monster in the players current position if so attack have them the player
+import engine
+import items
+import map
+import player
 
 __version__ = '0.1'
-
-def xfrange(start, stop, step):
-	while start < stop:
-		yield start
-		start += step
-
-class Player(object):
-	def __init__(self, name, position = None):
-		self.map = Map()
-		if not position:
-			self.position = self.map.get_random_position()
-		else:
-			self.position = position
-		self.logger = logging.getLogger('Player')
-		self.logger.debug('player started at ' + str(self.position))
-		self.health = 100.0
-		self.items = []
-		self.name = name
-		self.money = 0
-
-		ocarina = Item('Ocarina')
-		self.items.append(ocarina)
-		wooden_sword = Weapon('sword')
-		wooden_sword.damage = 5
-		self.items.append(wooden_sword)
-
-	def move_latitude(self, adjust):
-		self.position.latitude = self.position.latitude + adjust
-
-	def move_longitude(self, adjust):
-		self.position.longitude = self.position.longitude + adjust
-
-	def move_altitude(self, adjust):
-		self.position.altitude = self.position.altitude + adjust
-
-class Position(object):
-	def __init__(self, latitude, longitude, altitude):
-		self.latitude = latitude
-		self.longitude = longitude
-		self.altitude = altitude
-
-	def __str__(self):
-		return '(' + str(self.latitude) + ', ' + str(self.longitude) + ', ' + str(self.altitude) + ')'
-
-	def __cmp__(self, other):
-		if not isinstance(other, Position):
-			return -1
-		if not self.latitude == other.latitude:
-			return -1
-		if not self.longitude == other.longitude:
-			return -1
-		if not self.altitude == other.altitude:
-			return -1
-		return 0
-
-class GameEngine(object):
-	def __init__(self, player):
-		self.player = player
-		self.logger = logging.getLogger('GameEngine')
-		self.logger.info('GameEngine created')
-		self.map = Map()
-		elf = EnemyElf()
-		elf.position = self.map.get_random_position()
-		self.logger.debug('Put Elf at ' + str(elf.position))
-		treasure = Item('Treasure Chest')
-		treasure.position = self.map.get_random_position()
-		self.logger.debug('Put treasure chest at ' + str(treasure.position))
-		self.all_enemies = []
-		self.all_enemies.append(elf)
-		self.all_items = []
-		self.all_items.append(treasure)
-
-	def pre_move(self):
-		pass
-
-	def post_move(self):
-		self.logger.debug('player moved to ' + str(self.player.position))
-
-	def get_items_for_position(self, position):
-		items = []
-		for item in self.all_items:
-			if item.position == position:
-				items.append(item)
-		return items
-
-	def get_enemies_for_position(self, position):
-		enemies = []
-		for enemy in self.all_enemies:
-			if enemy.position == position:
-				enemies.append(enemy)
-		return enemies
-
-	def attack(self, enemy, weapon):
-		weapon_damage = self.get_low_damage(weapon)
-		enemy.health -= weapon_damage
-		if enemy.health <= 0:
-			enemy.position = None
-		return weapon_damage
-
-	def get_low_damage(self, weapon):
-		weapon_low_damage = float(weapon.damage) / 2.0
-		possible_damages = list(xfrange(weapon_low_damage, weapon.damage, 0.5))
-		possible_damages.append(weapon.damage)
-		return random.choice(possible_damages)
-
-class Enemy(object):
-	def __init__(self, name):
-		self.damage = 2
-		self.health = 25
-		self.name = name
-		self.position = None
-
-class EnemyElf(Enemy):
-	def __init__(self, id = 0):
-		name = 'Elf'
-		if id:
-			name += ' ' + str(id)
-		super(EnemyElf, self).__init__(name)
-		self.damage = 3
-		self.health = 15
-
-class EnemySpider(Enemy):
-	def __init__(self, id = 0):
-		name = 'Spider'
-		if id:
-			name += ' ' + str(id)
-		super(EnemySpider, self).__init__(name)
-		self.damage = 5
-		self.health = 10
 
 class Interface(cmd.Cmd, object):
 	def __init__(self, name):
 		super(Interface, self).__init__()
-		self.player = Player(name)
-		self.game_engine = GameEngine(self.player)
-		self.map = Map()
+		self.map = map.Map()
+		self.player = player.Player(name, self.map.get_random_position())
+		self.game_engine = engine.GameEngine(self.player, self.map)
 		self.player.position = self.player.position
 		self.logger = logging.getLogger('status')
 
@@ -163,7 +37,7 @@ class Interface(cmd.Cmd, object):
 			position.altitude += 1
 		elif args == 'down':
 			position.altitude -= 1
-		if not self.map.is_valid_position(position):
+		if not self.game_engine.is_valid_position(position):
 			self._print('Invalid position')
 			self.player.position = old_position
 			return
@@ -193,7 +67,7 @@ class Interface(cmd.Cmd, object):
 		if not weapon:
 			self._print('There is no ' + weapon_name)
 			return
-		if not isinstance(weapon, Weapon):
+		if not isinstance(weapon, items.ItemWeapon):
 			self._print('That is not a weapon')
 			return
 		self.logger.debug('Player tried using ' + weapon_name)
@@ -257,40 +131,6 @@ class Interface(cmd.Cmd, object):
 	def _print(self, message):
 		print(message)
 
-class Map(object):
-	def __init__(self):
-			#latitude, longitude, altitude
-			self.map_size = [[5, 5, 5], [-5, -5, -5]]
-
-	def is_valid_position(self, position):
-		if not (position.latitude >= self.map_size[1][0] and position.latitude <= self.map_size[0][0]):
-			return False
-		if not (position.longitude >= self.map_size[1][1] and position.longitude <= self.map_size[0][1]):
-			return False
-		if not (position.altitude >= self.map_size[1][2] and position.altitude <= self.map_size[0][2]):
-			return False
-		return True
-
-	def get_random_position(self):
-		latitude = random.randint(self.map_size[1][0], self.map_size[0][0])
-		longitude = random.randint(self.map_size[1][1], self.map_size[0][1])
-		altitude = random.randint(self.map_size[1][2], self.map_size[0][2])
-		position = Position(latitude, longitude, altitude)
-		return position
-
-class Item(object):
-	def __init__(self, name):
-		self.name = name
-		self.worth = 0
-		self.weight = 1
-		self.position = None
-
-class Weapon(Item):
-	def __init__(self, name):
-		super(Weapon, self).__init__(name)
-		self.durabilty = 100
-		self.damage = 1
-
 def main():
 	parser = argparse.ArgumentParser(description = '', conflict_handler = 'resolve')
 	parser.add_argument('-v', '--version', action = 'version', version = parser.prog + ' Version: ' + __version__)
@@ -310,4 +150,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
