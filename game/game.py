@@ -5,8 +5,7 @@ import logging
 import shlex
 import random
 
-#create a monster and put it at a random position and need a function see if a enemy is there
-#add all enemies to game engine
+#define post command in interface need stop and line takes check if there is a monster in the players current position if so attack have them the player
 
 __version__ = '0.1'
 
@@ -246,6 +245,14 @@ class Interface(cmd.Cmd, object):
 		item.position = None
 		self.player.items.append(item)
 
+	def postcmd(self, stop, line):
+		if not self.game_engine.get_enemies_for_position(self.player.position) == None:
+			for enemy in self.game_engine.get_enemies_for_position(self.player.position):
+				attack_enemy = enemy
+				damage = self.game_engine.attack(self.player, attack_enemy)
+				self._print(enemy.name + ' did ' + str(damage) + ' to ' + self.player.name)
+				if self.player.health <= 0:
+					self._print('Player died fighting a ' + attack_enemy.name)
 
 	def _print(self, message):
 		print(message)
