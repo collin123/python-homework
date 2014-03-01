@@ -114,6 +114,12 @@ class Interface(cmd.Cmd, object):
 		else:
 			self.show_items_in_position(self.player.position)
 
+	def do_load(self, args):
+		self.game_engine.load_game(args)
+
+	def do_save(self, args):
+		self.game_engine.save_game(self.player.position, args)
+
 	def add_to_inventory(self, item):
 		self._print('Added ' + item.name + ' to your inventory')
 		item.position = None

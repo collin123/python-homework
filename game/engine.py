@@ -1,5 +1,7 @@
 import logging
 import random
+import os
+import json
 
 import enemies
 import items
@@ -62,3 +64,26 @@ class GameEngine(object):
 		possible_damages.append(weapon.damage)
 		return random.choice(possible_damages)
 
+	def save_game(self, position, filename):
+		if os.path.isfile(filename):
+			self.logger.info('Overriding current save file')
+		save = open(filename, 'w')
+		position = {
+			'lattiude':self.player.position.latitude,
+			'longitude':self.player.position.longitude,
+			'altitude':self.player.position.altitude,
+		}
+		save.write(json.dumps(position))
+		save.close()
+
+	def load_game(self, filename):
+		if not os.path.isfile(filename):
+			self.logger.info('No save file exist')
+			return 0
+		else:
+			save = open(filename, 'r')
+			self.player.position.latitude = int(save.readline())
+			self.player.position.longitude = int(save.readline())
+			self.player.position.altitude = int(save.readline())
+			#self.player.items =  json.loads(save.readlines(255))
+			self.logger.debug('New position is ' + str(self.player.position))
