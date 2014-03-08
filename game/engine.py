@@ -68,12 +68,12 @@ class GameEngine(object):
 		if os.path.isfile(filename):
 			self.logger.info('Overriding current save file')
 		save = open(filename, 'w')
-		position = {
-			'lattiude':self.player.position.latitude,
-			'longitude':self.player.position.longitude,
-			'altitude':self.player.position.altitude,
-		}
-		save.write(json.dumps(position))
+		position = self.player.position.store()
+		item_storage = []
+		for item in self.player.items:
+			item_storage.append(item.store())
+		save_data = {'items':item_storage, 'position':position}
+		save.write(json.dumps(save_data))
 		save.close()
 
 	def load_game(self, filename):
@@ -81,9 +81,19 @@ class GameEngine(object):
 			self.logger.info('No save file exist')
 			return 0
 		else:
-			save = open(filename, 'r')
-			self.player.position.latitude = int(save.readline())
-			self.player.position.longitude = int(save.readline())
-			self.player.position.altitude = int(save.readline())
-			#self.player.items =  json.loads(save.readlines(255))
+			save = open(filename, 'rb')
+			data = json.loads(save.readline())
+			self.player.position.latitude = data['position']['latitude']
+			self.player.position.longitude = data['position']['longitude']
+			self.player.position.longitude = data['position']['altitude']
 			self.logger.debug('New position is ' + str(self.player.position))
+			self.player.items = []
+			for item in data['items']:
+				if item['type'] == 'Item':
+					new_item = items.Item(item['name'])
+				elif item['type'] == 'ItemWeapon':
+					new_item = items.ItemWeapon(item['name'])
+				for key, value in item.items():
+					setattr(new_item, key, value)
+				self.player.items.append(new_item)
+				self.logger.debug(new_item.name)

@@ -27,6 +27,11 @@ class Position(object):
 		self.longitude = longitude
 		self.altitude = altitude
 
+	def store(self):
+		data = self.__dict__
+		data['type'] = self.__class__.__name__
+		return data
+
 	def __str__(self):
 		return '(' + str(self.latitude) + ', ' + str(self.longitude) + ', ' + str(self.altitude) + ')'
 

@@ -89,6 +89,13 @@ class Interface(cmd.Cmd, object):
 		if enemy.health <= 0:
 			self._print('You killed the ' + target_enemy)
 
+	def do_show(self, args):
+		args = args.lower()
+		args = shlex.split(args)
+		if args[0] == 'inventory' or 'inv':
+			for item in self.player.items:
+				self._print(item.name )
+
 	def __str__(self):
 		for item in self.game_engine.all_items:
 			return item.name

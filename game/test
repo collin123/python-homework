@@ -1,1 +1,1 @@
-{"altitude": 1, "longitude": 2, "lattiude": -1}
+{"items": [{"position": null, "type": "Item", "name": "Ocarina", "weight": 1, "worth": 0}, {"name": "sword", "weight": 1, "damage": 5, "position": null, "type": "ItemWeapon", "worth": 0, "durabilty": 100}], "position": {"latitude": 2, "altitude": -1, "type": "Position", "longitude": 0}}
