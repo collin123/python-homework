@@ -8,6 +8,7 @@
 
  Explanation video: http://youtu.be/vRB_983kUMc
 """
+import random
 import pygame
 
 # Define some colors
@@ -35,6 +36,8 @@ tiles = {'r0': (0, 0),
 	'r3': (0, 200),
 	'r4': (200, 200)
 }
+random_tile = random.choice(tiles.keys())
+
 
 def is_cursor_in_rectangle(size, rectangle_position, cursor_position):
 	if rectangle_position[0] + size <= cursor_position[0]:
@@ -51,6 +54,7 @@ def is_cursor_in_rectangle(size, rectangle_position, cursor_position):
 center = {'x':size[0]/2, 'y':size[1]/2}
 rectangle_size = 100
 screen.fill(WHITE)
+position = (0, 0)
 for key, value in tiles.items():
 	pygame.draw.rect(screen, BLACK, [ value[0], value[1], rectangle_size, rectangle_size])
 while not done:
@@ -60,28 +64,19 @@ while not done:
 			done = True # Flag that we are done so we exit this loop
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			position = pygame.mouse.get_pos()
-			for key, value in tiles.items():
-				cursor_in_shape = is_cursor_in_rectangle(rectangle_size, value, position)
-				if cursor_in_shape:
-					pygame.draw.rect(screen, RED, [ value[0], value[1], rectangle_size, rectangle_size])
+
+		for key, value in tiles.items():
+			if is_cursor_in_rectangle(rectangle_size, value, position):
+				if random_tile == key:
+					color = GREEN
 				else:
-					pygame.draw.rect(screen, BLACK, [ value[0], value[1], rectangle_size, rectangle_size])
-
+					color = RED
+			else:
+				color = BLACK
+			pygame.draw.rect(screen, color, [value[0], value[1], rectangle_size, rectangle_size])
 	# --- Game logic should go here
-
-	# --- Drawing code should go here
-
-	# First, clear the screen to white. Don't put other drawing commands
-	# above this, or they will be erased with this command.
-
-
-	# --- Go ahead and update the screen with what we've drawn.
 	pygame.display.flip()
 
 	# --- Limit to 60 frames per second
 	clock.tick(60)
-
-# Close the window and quit.
-# If you forget this line, the program will 'hang'
-# on exit if running from IDLE.
 pygame.quit()
