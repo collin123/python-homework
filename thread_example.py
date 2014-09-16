@@ -19,15 +19,25 @@ def download(event, url, filename):
 
 
 def main():
-	threads = []
+	threads = {}
 	event = threading.Event()
 	start_time = time.time()
 	for files in FILES_TO_DOWNLOAD:
-		thread = threading.Thread(target=download, args=(event, files[0], files[1]))
-		threads.append(thread)
+		file_url = files[0]
+		file_name = files[1]
+		thread = threading.Thread(target=download, args=(event, file_url, file_name))
+		threads[file_name] = thread
 		thread.start()
-	for thread in threads:
-		thread.join()
+
+	while threads:
+		#import pdb; pdb.set_trace()
+		dead_threads = []
+		for file_name, thread in threads.items():
+			if not thread.is_alive():
+				dead_threads.append(file_name)
+		for file_name in dead_threads:
+			print(file_name + ' finished downloading')
+			del threads[file_name]
 	event.wait()
 	elasped = time.time() - start_time
 	print(elasped)
